@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PressEase - Your Digital Laundry Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        /* Custom slider for tracking */
+        .tracking-slider {
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e2e8f0;
+            outline: none;
+        }
+        .tracking-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+        /* For mobile responsiveness */
+        @media (max-width: 640px) {
+            .responsive-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-r from-cyan-500 to-blue-500 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Login Section -->
+        <div id="loginSection" class="max-w-md mx-auto glass-effect rounded-xl p-6 mb-8">
+            <h1 class="text-3xl font-bold text-white mb-6 text-center">PressEase</h1>
+            <p class="text-white text-center mb-4">Your Digital Laundry Assistant</p>
+            <div class="space-y-4">
+                <input type="tel" id="phoneInput" placeholder="Enter Phone Number" class="w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-300">
+                <button onclick="sendOTP()" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition">Send OTP</button>
+                <div id="otpSection" class="hidden">
+                    <input type="text" id="otpInput" placeholder="Enter OTP" class="w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-300 mb-4">
+                    <p class="text-white text-sm mb-2">Default OTP: 1234</p>
+                    <button onclick="verifyOTP()" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition">Verify OTP</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Type Selection -->
+        <div id="userTypeSection" class="hidden max-w-md mx-auto glass-effect rounded-xl p-6 mb-8">
+            <h2 class="text-2xl font-bold text-white mb-6 text-center">I am a...</h2>
+            <div class="grid grid-cols-2 gap-4 responsive-grid">
+                <button onclick="setUserType('pressman')" class="bg-white p-4 rounded-lg hover:bg-gray-100 transition flex flex-col items-center">
+                    <i class="bi bi-person-workspace text-3xl mb-2 text-blue-600"></i>
+                    <div class="text-center">Press Service Provider</div>
+                </button>
+                <button onclick="setUserType('customer')" class="bg-white p-4 rounded-lg hover:bg-gray-100 transition flex flex-col items-center">
+                    <i class="bi bi-person text-3xl mb-2 text-blue-600"></i>
+                    <div class="text-center">Customer</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Service Provider Dashboard -->
+        <div id="pressmanDashboard" class="hidden max-w-2xl mx-auto glass-effect rounded-xl p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">Service Provider Dashboard</h2>
+                <button onclick="logout()" class="text-white hover:underline"><i class="bi bi-box-arrow-right mr-1"></i> Logout</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <h3 class="font-bold mb-2 text-lg">Profile Settings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Service Name</label>
+                            <input type="text" id="serviceName" placeholder="Your business name" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Service Rate</label>
+                            <input type="number" id="serviceRate" placeholder="Rate per item (₹)" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        </div>
+                    </div>
+                    <h3 class="font-bold mb-2">Location Settings</h3>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="updateLocation()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center">
+                            <i class="bi bi-geo-alt mr-2"></i> Update Location
+                        </button>
+                        <span id="locationStatus" class="text-sm text-gray-600">Not updated</span>
+                    </div>
+                    <button onclick="saveProfile()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition w-full">Save Profile</button>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <h3 class="font-bold mb-4 text-lg">Orders</h3>
+                    <div class="flex mb-4">
+                        <button onclick="showOrderTab('pending')" class="px-4 py-2 bg-blue-100 hover:bg-blue-200 transition rounded-l order-tab" data-tab="pending">Pending</button>
+                        <button onclick="showOrderTab('inProgress')" class="px-4 py-2 bg-gray-100 hover:bg-blue-200 transition order-tab" data-tab="inProgress">In Progress</button>
+                        <button onclick="showOrderTab('completed')" class="px-4 py-2 bg-gray-100 hover:bg-blue-200 transition rounded-r order-tab" data-tab="completed">Completed</button>
+                    </div>
+                    <div id="ordersList" class="space-y-3">
+                        <!-- Orders will be populated here -->
+                    </div>
+                    <div id="noOrders" class="hidden text-center py-4 text-gray-500">
+                        <i class="bi bi-inbox text-4xl mb-2"></i>
+                        <p>No orders in this category</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Dashboard -->
+        <div id="customerDashboard" class="hidden max-w-2xl mx-auto glass-effect rounded-xl p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">Find Press Services</h2>
+                <button onclick="logout()" class="text-white hover:underline"><i class="bi bi-box-arrow-right mr-1"></i> Logout</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <div class="flex items-center mb-4">
+                        <i class="bi bi-geo-alt text-blue-600 mr-2"></i>
+                        <h3 class="font-bold">Nearby Press Services</h3>
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" id="searchInput" placeholder="Search by name or area" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    </div>
+                    <div id="pressmanList" class="space-y-3">
+                        <!-- Nearby pressmen will be listed here -->
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <div class="flex items-center mb-4">
+                        <i class="bi bi-list-check text-blue-600 mr-2"></i>
+                        <h3 class="font-bold">My Orders</h3>
+                    </div>
+                    <div class="flex mb-4">
+                        <button onclick="showCustomerOrderTab('active')" class="px-4 py-2 bg-blue-100 hover:bg-blue-200 transition rounded-l customer-order-tab" data-tab="active">Active</button>
+                        <button onclick="showCustomerOrderTab('history')" class="px-4 py-2 bg-gray-100 hover:bg-blue-200 transition rounded-r customer-order-tab" data-tab="history">History</button>
+                    </div>
+                    <div id="customerOrders" class="space-y-3">
+                        <!-- Customer orders will be shown here -->
+                    </div>
+                    <div id="noCustomerOrders" class="hidden text-center py-4 text-gray-500">
+                        <i class="bi bi-inbox text-4xl mb-2"></i>
+                        <p>No orders to display</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Details Modal -->
+        <div id="orderModal" class="fixed inset-0 hidden z-50">
+            <div class="absolute inset-0 bg-black bg-opacity-50" onclick="closeOrderModal()"></div>
+            <div class="relative top-20 mx-auto p-5 w-full max-w-md glass-effect rounded-xl">
+                <div class="bg-white p-5 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold" id="modalTitle">Order Details</h3>
+                        <button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-500">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div id="modalContent">
+                        <!-- Order details will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Service Modal -->
+        <div id="bookServiceModal" class="fixed inset-0 hidden z-50">
+            <div class="absolute inset-0 bg-black bg-opacity-50" onclick="closeBookServiceModal()"></div>
+            <div class="relative top-20 mx-auto p-5 w-full max-w-md glass-effect rounded-xl">
+                <div class="bg-white p-5 rounded-lg shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold" id="bookServiceTitle">Book Service</h3>
+                        <button onclick="closeBookServiceModal()" class="text-gray-400 hover:text-gray-500">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div id="bookServiceContent" class="space-y-3">
+                        <div id="selectedPressmanInfo"></div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Number of Items</label>
+                            <input type="number" id="itemCount" min="1" value="1" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Item Type</label>
+                            <select id="itemType" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300">
+                                <option value="shirts">Shirts</option>
+                                <option value="pants">Pants</option>
+                                <option value="saree">Saree</option>
+                                <option value="bedsheets">Bedsheets</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Special Instructions</label>
+                            <textarea id="instructions" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300" rows="2"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Estimated Cost</label>
+                            <div class="bg-blue-50 p-3 rounded text-blue-800 font-semibold" id="estimatedCost">₹50</div>
+                        </div>
+                        <button onclick="confirmBooking()" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">Confirm Booking</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulated data and functions
+        let currentUser = null;
+        let userType = null;
+        let currentTab = 'pending';
+        let customerCurrentTab = 'active';
+        let currentPressmanId = null;
+        let userLocation = null;
+        
+        // Simulated data
+        const pressmen = [
+            { id: 1, name: "John's Press Service", distance: '0.5 km', rating: 4.5, rate: 10, location: "Sector 12, Noida" },
+            { id: 2, name: "Quick Press", distance: '1.2 km', rating: 4.2, rate: 8, location: "Sector 15, Noida" },
+            { id: 3, name: "Premium Laundry", distance: '0.8 km', rating: 4.7, rate: 12, location: "Sector 18, Noida" },
+            { id: 4, name: "EcoPress", distance: '2.1 km', rating: 4.0, rate: 9, location: "Sector 22, Noida" }
+        ];
+        
+        const orders = [
+            { id: 101, customer: "Rahul", phone: "9876543210", items: "3 Shirts", status: "pending", date: "2023-10-14", price: 30 },
+            { id: 102, customer: "Anita", phone: "8765432109", items: "2 Pants, 1 Saree", status: "in_progress", date: "2023-10-13", price: 45 },
+            { id: 103, customer: "Suresh", phone: "7654321098", items: "4 Shirts, 2 Pants", status: "completed", date: "2023-10-12", price: 60 },
+            { id: 104, customer: "Priya", phone: "6543210987", items: "2 Bedsheets", status: "pending", date: "2023-10-14", price: 40 }
+        ];
+        
+        const customerOrders = [
+            { id: 201, pressman: "John's Press Service", items: "2 Shirts, 1 Pant", status: "active", date: "2023-10-14", price: 30, tracking: 30, estimatedDelivery: "2023-10-16" },
+            { id: 202, pressman: "Quick Press", items: "3 Sarees", status: "active", date: "2023-10-13", price: 60, tracking: 70, estimatedDelivery: "2023-10-15" },
+            { id: 203, pressman: "Premium Laundry", items: "4 Shirts", status: "completed", date: "2023-10-10", price: 48, rating: 5, estimatedDelivery: "2023-10-12" },
+            { id: 204, pressman: "EcoPress", items: "2 Bedsheets", status: "completed", date: "2023-10-08", price: 36, rating: 4, estimatedDelivery: "2023-10-10" }
+        ];
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // For development ease, automatically show the dashboard
+            // Comment this out for production
+            // autoLogin();
+        });
+
+        function autoLogin() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('userTypeSection').classList.remove('hidden');
+        }
+
+        function sendOTP() {
+            const phone = document.getElementById('phoneInput').value;
+            if (phone.length >= 10) {
+                document.getElementById('otpSection').classList.remove('hidden');
+                // Simulate OTP send
+                alert('OTP sent to ' + phone);
+            } else {
+                alert('Please enter a valid phone number');
+            }
+        }
+
+        function verifyOTP() {
+            const otp = document.getElementById('otpInput').value;
+            if (otp === '1234') { // Default OTP as per instructions
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('userTypeSection').classList.remove('hidden');
+                currentUser = { phone: document.getElementById('phoneInput').value };
+            } else {
+                alert('Invalid OTP. Please use 1234 for testing');
+            }
+        }
+
+        function setUserType(type) {
+            userType = type;
+            document.getElementById('userTypeSection').classList.add('hidden');
+            if (type === 'pressman') {
+                document.getElementById('pressmanDashboard').classList.remove('hidden');
+                loadPressmanDashboard();
+            } else {
+                document.getElementById('customerDashboard').classList.remove('hidden');
+                loadCustomerDashboard();
+            }
+        }
+
+        function updateLocation() {
+            if ("geolocation" in navigator) {
+                document.getElementById('locationStatus').textContent = "Updating...";
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    document.getElementById('locationStatus').textContent = "Updated successfully";
+                    alert('Location updated successfully!');
+                }, function(error) {
+                    document.getElementById('locationStatus').textContent = "Failed to update";
+                    alert('Error getting location: ' + error.message);
+                });
+            } else {
+                document.getElementById('locationStatus').textContent = "Not supported";
+                alert('Geolocation is not supported by your browser');
+            }
+        }
+
+        function loadPressmanDashboard() {
+            showOrderTab('pending');
+        }
+
+        function showOrderTab(tab) {
+            currentTab = tab;
+            
+            // Update tab styling
+            const tabs = document.querySelectorAll('.order-tab');
+            tabs.forEach(t => {
+                t.classList.remove('bg-blue-100');
+                t.classList.add('bg-gray-100');
+            });
+            const activeTab = document.querySelector(`[data-tab="${tab}"]`);
+            if (activeTab) {
+                activeTab.classList.remove('bg-gray-100');
+                activeTab.classList.add('bg-blue-100');
+            }
+
+            // Filter orders based on tab
+            let filteredOrders;
+            if (tab === 'pending') {
+                filteredOrders = orders.filter(order => order.status === 'pending');
+            } else if (tab === 'inProgress') {
+                filteredOrders = orders.filter(order => order.status === 'in_progress');
+            } else {
+                filteredOrders = orders.filter(order => order.status === 'completed');
+            }
+
+            // Display orders or no orders message
+            const ordersList = document.getElementById('ordersList');
+            const noOrders = document.getElementById('noOrders');
+            
+            if (filteredOrders.length === 0) {
+                ordersList.innerHTML = '';
+                noOrders.classList.remove('hidden');
+            } else {
+                noOrders.classList.add('hidden');
+                ordersList.innerHTML = filteredOrders.map(order => `
+                    <div class="border p-3 rounded shadow-sm hover:shadow-md transition">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <strong>${order.customer}</strong> <span class="text-sm text-gray-600">(${order.phone})</span>
+                                <p class="text-sm text-gray-600">${order.items}</p>
+                                <p class="text-sm text-gray-600">Date: ${order.date}</p>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="${getStatusClass(order.status)} px-2 py-1 rounded text-sm">${getStatusText(order.status)}</span>
+                                <span class="font-bold mt-1">₹${order.price}</span>
+                            </div>
+                        </div>
+                        <div class="mt-2 flex justify-between">
+                            <button onclick="viewOrderDetails(${order.id})" class="text-blue-600 hover:text-blue-800">
+                                <i class="bi bi-eye mr-1"></i> View
+                            </button>
+                            ${getOrderActionButton(order)}
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'pending': return 'bg-yellow-100 text-yellow-800';
+                case 'in_progress': return 'bg-blue-100 text-blue-800';
+                case 'completed': return 'bg-green-100 text-green-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return 'Pending';
+                case 'in_progress': return 'In Progress';
+                case 'completed': return 'Completed';
+                default: return status;
+            }
+        }
+
+        function getOrderActionButton(order) {
+            if (order.status === 'pending') {
+                return `<button onclick="updateOrderStatus(${order.id}, 'in_progress')" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                    Accept
+                </button>`;
+            } else if (order.status === 'in_progress') {
+                return `<button onclick="updateOrderStatus(${order.id}, 'completed')" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                    Mark Completed
+                </button>`;
+            } else {
+                return '';
+            }
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            // Update order status
+            const orderIndex = orders.findIndex(o => o.id === orderId);
+            if (orderIndex !== -1) {
+                orders[orderIndex].status = newStatus;
+                showOrderTab(currentTab);
+                alert(`Order #${orderId} status updated to ${getStatusText(newStatus)}`);
+            }
+        }
+
+        function viewOrderDetails(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                document.getElementById('modalTitle').textContent = `Order #${order.id} Details`;
+                document.getElementById('modalContent').innerHTML = `
+                    <div class="space-y-3">
+                        <div>
+                            <span class="font-medium">Customer:</span> ${order.customer}
+                        </div>
+                        <div>
+                            <span class="font-medium">Phone:</span> ${order.phone}
+                        </div>
+                        <div>
+                            <span class="font-medium">Items:</span> ${order.items}
+                        </div>
+                        <div>
+                            <span class="font-medium">Order Date:</span> ${order.date}
+                        </div>
+                        <div>
+                            <span class="font-medium">Status:</span> 
+                            <span class="${getStatusClass(order.status)} px-2 py-1 rounded text-sm">${getStatusText(order.status)}</span>
+                        </div>
+                        <div>
+                            <span class="font-medium">Price:</span> ₹${order.price}
+                        </div>
+                        <div class="pt-3 border-t">
+                            ${getDetailedOrderActionButton(order)}
+                        </div>
+                    </div>
+                `;
+                document.getElementById('orderModal').classList.remove('hidden');
+            }
+        }
+
+        function getDetailedOrderActionButton(order) {
+            if (order.status === 'pending') {
+                return `<button onclick="updateOrderStatus(${order.id}, 'in_progress'); closeOrderModal();" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                    Accept Order
+                </button>`;
+            } else if (order.status === 'in_progress') {
+                return `<button onclick="updateOrderStatus(${order.id}, 'completed'); closeOrderModal();" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+                    Mark as Completed
+                </button>`;
+            } else {
+                return `<button onclick="closeOrderModal()" class="w-full bg-gray-200 py-2 rounded hover:bg-gray-300">
+                    Close
+                </button>`;
+            }
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').classList.add('hidden');
+        }
+
+        function saveProfile() {
+            const serviceName = document.getElementById('serviceName').value;
+            const serviceRate = document.getElementById('serviceRate').value;
+            
+            if (!serviceName || !serviceRate) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            if (!userLocation) {
+                alert('Please update your location to create your profile');
+                return;
+            }
+            
+            alert('Profile saved successfully!');
+        }
+
+        function loadCustomerDashboard() {
+            loadNearbyPressmen();
+            showCustomerOrderTab('active');
+        }
+
+        function loadNearbyPressmen() {
+            const pressmanList = document.getElementById('pressmanList');
+            pressmanList.innerHTML = pressmen.map(pressman => `
+                <div class="border p-3 rounded shadow-sm hover:shadow-md transition">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <strong>${pressman.name}</strong>
+                            <p class="text-sm text-gray-600">${pressman.distance} away • ${pressman.location}</p>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="bi bi-star-fill text-yellow-400 mr-1"></i>
+                            <span>${pressman.rating}</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-sm font-medium">Rate: ₹${pressman.rate}/item</span>
+                        <button onclick="bookService(${pressman.id})" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 transition">
+                            Book Service
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function bookService(pressmanId) {
+            currentPressmanId = pressmanId;
+            const pressman = pressmen.find(p => p.id === pressmanId);
+            
+            if (pressman) {
+                document.getElementById('bookServiceTitle').textContent = `Book ${pressman.name}`;
+                document.getElementById('selectedPressmanInfo').innerHTML = `
+                    <div class="bg-blue-50 p-3 rounded mb-3">
+                        <div class="font-medium">${pressman.name}</div>
+                        <div class="text-sm text-gray-600">${pressman.distance} away</div>
+                        <div class="flex items-center">
+                            <i class="bi bi-star-fill text-yellow-400 mr-1"></i>
+                            <span>${pressman.rating}</span>
+                        </div>
+                        <div class="text-sm mt-1">Rate: ₹${pressman.rate} per item</div>
+                    </div>
+                `;
+                
+                // Add event listener for item count to update estimated cost
+                const itemCountInput = document.getElementById('itemCount');
+                itemCountInput.addEventListener('input', function() {
+                    updateEstimatedCost(pressman.rate);
+                });
+                
+                // Initial cost calculation
+                updateEstimatedCost(pressman.rate);
+                
+                document.getElementById('bookServiceModal').classList.remove('hidden');
+            }
+        }
+
+        function updateEstimatedCost(rate) {
+            const itemCount = document.getElementById('itemCount').value || 1;
+            const estimatedCost = itemCount * rate;
+            document.getElementById('estimatedCost').textContent = `₹${estimatedCost}`;
+        }
+
+        function confirmBooking() {
+            const pressman = pressmen.find(p => p.id === currentPressmanId);
+            const itemCount = document.getElementById('itemCount').value || 1;
+            const itemType = document.getElementById('itemType').value;
+            const instructions = document.getElementById('instructions').value;
+            
+            // Create a new order
+            const newOrderId = 200 + customerOrders.length + 1;
+            const newOrder = {
+                id: newOrderId,
+                pressman: pressman.name,
+                items: `${itemCount} ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`,
+                status: "active",
+                date: new Date().toISOString().slice(0, 10),
+                price: itemCount * pressman.rate,
+                tracking: 0,
+                estimatedDelivery: new Date(Date.now() + 2*24*60*60*1000).toISOString().slice(0, 10)
+            };
+            
+            customerOrders.unshift(newOrder);
+            
+            closeBookServiceModal();
+            showCustomerOrderTab('active');
+            alert('Booking confirmed! Your order has been placed.');
+        }
+
+        function closeBookServiceModal() {
+            document.getElementById('bookServiceModal').classList.add('hidden');
+        }
+
+        function showCustomerOrderTab(tab) {
+            customerCurrentTab = tab;
+            
+            // Update tab styling
+            const tabs = document.querySelectorAll('.customer-order-tab');
+            tabs.forEach(t => {
+                t.classList.remove('bg-blue-100');
+                t.classList.add('bg-gray-100');
+            });
+            document.querySelector(`[data-tab="${tab}"]`).classList.remove('bg-gray-100');
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('bg-blue-100');
+            
+            // Filter orders based on tab
+            let filteredOrders;
+            if (tab === 'active') {
+                filteredOrders = customerOrders.filter(order => order.status === 'active');
+            } else {
+                filteredOrders = customerOrders.filter(order => order.status === 'completed');
+            }
+            
+            // Display orders or no orders message
+            const customerOrdersList = document.getElementById('customerOrders');
+            const noCustomerOrders = document.getElementById('noCustomerOrders');
+            
+            if (filteredOrders.length === 0) {
+                customerOrdersList.innerHTML = '';
+                noCustomerOrders.classList.remove('hidden');
+            } else {
+                noCustomerOrders.classList.add('hidden');
+                customerOrdersList.innerHTML = filteredOrders.map(order => `
+                    <div class="border p-3 rounded shadow-sm hover:shadow-md transition">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <strong>${order.pressman}</strong>
+                                <p class="text-sm text-gray-600">${order.items}</p>
+                                <p class="text-sm text-gray-600">Order Date: ${order.date}</p>
+                            </div>
+                            <div class="font-bold">₹${order.price}</div>
+                        </div>
+                        ${getOrderTrackingOrRating(order)}
+                    </div>
+                `).join('');
+            }
+        }
+
+        function getOrderTrackingOrRating(order) {
+            if (order.status === 'active') {
+                return `
+                    <div class="mt-2">
+                        <div class="flex justify-between text-sm">
+                            <span>Order Processing</span>
+                            <span>Delivery: ${order.estimatedDelivery}</span>
+                        </div>
+                        <div class="relative pt-1">
+                            <input type="range" class="tracking-slider" disabled value="${order.tracking}" />
+                            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>Placed</span>
+                                <span>Processing</span>
+                                <span>Ready</span>
+                                <span>Delivered</span>
+                            </div>
+                        </div>
+                        <button onclick="viewOrderDetails(${order.id})" class="mt-2 text-blue-600 hover:text-blue-800 text-sm">
+                            <i class="bi bi-info-circle mr-1"></i> View Details
+                        </button>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="mt-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Delivered on: ${order.estimatedDelivery}</span>
+                            <div class="flex items-center">
+                                <span class="mr-1">Rated:</span>
+                                ${getRatingStars(order.rating)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function getRatingStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= rating) {
+                    stars += '<i class="bi bi-star-fill text-yellow-400"></i>';
+                } else {
+                    stars += '<i class="bi bi-star text-gray-300"></i>';
+                }
+            }
+            return stars;
+        }
+
+        function logout() {
+            currentUser = null;
+            userType = null;
+            userLocation = null;
+            
+            // Reset UI
+            document.getElementById('pressmanDashboard').classList.add('hidden');
+            document.getElementById('customerDashboard').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('otpSection').classList.add('hidden');
+            
+            // Clear inputs
+            document.getElementById('phoneInput').value = '';
+            document.getElementById('otpInput').value = '';
+            
+            if (document.getElementById('serviceName')) {
+                document.getElementById('serviceName').value = '';
+            }
+            if (document.getElementById('serviceRate')) {
+                document.getElementById('serviceRate').value = '';
+            }
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
